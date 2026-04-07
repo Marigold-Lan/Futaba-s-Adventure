@@ -5,7 +5,7 @@
 ---
 
 
-## 🎮 玩法介绍 && 实鸡展示
+## 🎮 玩法介绍 && 部分实鸡演示
 
 玩家操控角色在3D关卡中奔跑、跳跃、攀爬，利用多样动作技能穿越障碍、击败敌人。核心循环包含：探索关卡收集金币与星星、利用地形与技能组合抵达终点、在存档点保存进度。特色机制包括多段跳/土狼跳/蹬墙跳等精细化跳跃系统、轨道滑行与攀爬的边缘交互、冲刺/旋转攻击/踩踏等战斗动作。
 
@@ -25,16 +25,23 @@
 
 ![futaba 飞机2](https://github.com/user-attachments/assets/734ef7e0-c873-4720-ba1f-5ceb084d5f5c)
 
-5.
+5.交互道具盒
+
+![futaba 交互物品盒子](https://github.com/user-attachments/assets/e70bae95-dc68-4128-bb70-cd9481efa5f1)
 
 
+6.交互机关陷阱、拿起物品
 
-6.
+![futaba 交互机关陷阱与拾取物品](https://github.com/user-attachments/assets/84349cff-557f-4445-9dda-7c32b6644a62)
 
 
+7.冲刺->跳跃->重踏破坏物品->拾取金币
 
-7.
+![futaba 金币、重踏、冲刺、破坏](https://github.com/user-attachments/assets/4d7d64e5-85b9-4bb6-9052-b2f4335f0500)
 
+8.蹲下->后空翻->抓杆->调整方向->跳跃->飞扑->旋转破坏物品
+
+![futaba 蹲下、后空翻、抓杆、跳跃、飞扑、旋转破坏](https://github.com/user-attachments/assets/086819dd-bacb-4dc5-b6f5-c65c0673ce62)
 
 ---
 
