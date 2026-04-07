@@ -1,7 +1,7 @@
 # Futaba's Adventure
 
 使用Unity开发的3D平台跳跃动作游戏，核心聚焦于高精度角色操控系统与模块化状态机架构，实现了类《超级马力欧》的丰富动作体系。
-<img width="1544" height="867" alt="image" src="https://github.com/user-attachments/assets/b1b8260d-a372-4896-b9d4-01ea26e19cd4" />
+
 ---
 
 
