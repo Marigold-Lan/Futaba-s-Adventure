@@ -11,11 +11,13 @@
 
 1.异步加载
 
-![futaba异步加载](https://github.com/user-attachments/assets/e49c613e-831a-48da-9076-7c12c823c3d8)
+![futaba 异步加载-1](https://github.com/user-attachments/assets/c5bf41e0-84fb-44d7-bb2d-a7f4b064cca4)
+
 
 2.UI 界面（选择存档、选择关卡）
 
-![futaba 两个UI](https://github.com/user-attachments/assets/7a28c0ff-9eb4-43ee-ab3b-a0d7643d62ec)
+![futaba UI](https://github.com/user-attachments/assets/e0963ba2-bab9-4d75-8576-ce49ff53ca8a)
+
 
 3.跳跃（可变跳跃高度）
    
