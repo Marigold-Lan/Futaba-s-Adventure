@@ -41,104 +41,116 @@
 
 ## 🏗️ 核心架构设计
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Game (单例 - 游戏主控)                         │
-│  ├─ 管理关卡列表 (List<GameLevel>)                                    │
-│  ├─ 处理重试次数、存档请求                                            │
-│  └─ 跨场景状态保持 (DontDestroyOnLoad)                                │
-└─────────────────────────────────────────────────────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌───────────────┐          ┌─────────────────┐         ┌──────────────────┐
-│   GameSaver   │          │   GameLoader    │         │   GameController │
-│  (存档管理器)  │          │  (场景加载器)    │         │   (游戏控制器)   │
-└───────────────┘          └─────────────────┘         └──────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      Entity<T> (泛型实体基类)                         │
-│  ├─ CharacterController封装 (移动/碰撞/地面检测)                      │
-│  ├─ 速度分离管理 (lateralVelocity / verticalVelocity)                 │
-│  ├─ 地面检测系统 (SphereCast + 斜坡处理)                              │
-│  ├─ 自定义碰撞切换 (UseCustomCollision)                               │
-│  └─ Spline轨道支持                                                    │
-└─────────────────────────────────────────────────────────────────────┘
-                                    │
-            ┌───────────────────────┴───────────────────────┐
-            │                                               │
-            ▼                                               ▼
-┌──────────────────────────────┐              ┌──────────────────────────────┐
-│      Player : Entity<Player> │              │       Enemy : Entity<Enemy>  │
-│  ├─ PlayerStateManager         │              │  ├─ EnemyStateManager          │
-│  ├─ PlayerInputManager         │              │  ├─ WaypointManager            │
-│  ├─ PlayerStatsManager         │              │  ├─ 视野检测 (OverlapSphere)   │
-│  ├─ Health                     │              │  └─ 接触攻击系统               │
-│  ├─ 跳跃计数器管理             │              │                                │
-│  ├─ 拾取/投掷系统              │              │                                │
-│  └─ 墙壁滑行/边缘悬挂          │              │                                │
-└──────────────────────────────┘              └──────────────────────────────┘
-            │                                               │
-            ▼                                               ▼
-┌──────────────────────────────┐              ┌──────────────────────────────┐
-│   EntityStateManager<T>      │              │   EntityStateManager<T>      │
-│   (状态机管理器)              │              │   (状态机管理器)              │
-│  ├─ states: Dictionary<Type, │              │  ├─ states: Dictionary<Type,   │
-│  │   EntityState<T>>           │              │  │   EnemyState>               │
-│  ├─ current / last 状态引用    │              │  └─ 共享相同基类实现            │
-│  └─ Change<TState>() 切换      │              │                                │
-└──────────────────────────────┘              └──────────────────────────────┘
-            │                                               │
-            ▼                                               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      EntityState<T> (泛型状态基类)                    │
-│  ├─ OnEnter / OnExit / OnStep 生命周期                               │
-│  ├─ OnContact 碰撞回调                                               │
-│  ├─ CreateFromString 反射工厂                                        │
-│  └─ timeSinceEntered 状态持续时间                                    │
-└─────────────────────────────────────────────────────────────────────┘
-            │
-    ┌───────┼───────┬───────────┬───────────┬───────────┬───────────┐
-    │       │       │           │           │           │           │
-    ▼       ▼       ▼           ▼           ▼           ▼           ▼
-┌────────┐┌────────┐┌──────────┐┌────────┐┌────────┐┌────────┐┌──────────┐
-│  Walk  ││  Fall  ││   Dash   ││  Spin  ││  Swim  ││ WallDrag││LedgeHang │
-└────────┘└────────┘└──────────┘└────────┘└────────┘└────────┘└──────────┘
-    (20+ 状态类，均继承 PlayerState : EntityState<Player>)
+```mermaid
+classDiagram
+    %% 核心控制器层
+    class Game {
+        <<Singleton>>
+        -List~GameLevel~ levels
+        +HandleRetry()
+        +SaveGame()
+        +DontDestroyOnLoad()
+    }
+    Game --> GameSaver : 依赖
+    Game --> GameLoader : 依赖
+    Game --> GameController : 依赖
 
-┌─────────────────────────────────────────────────────────────────────┐
-│                          辅助系统                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  PlayerStats (ScriptableObject) │  Health │  GameTags (常量定义)    │
-│  - 50+ 可调参数                    │  - 伤害/无敌                          │
-│  - 奔跑/跳跃/滑行独立配置          │  - 恢复机制                           │
-└─────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                            UI 层 (MVP)                               │
-│  IHudView ◄── HUD (MonoBehaviour)                                    │
-│                    ▲                                                │
-│                    │                                                │
-│              HudPresenter                                           │
-│         (绑定Model: LevelScore/Game/Player)                          │
-└─────────────────────────────────────────────────────────────────────┘
-```
+    %% 实体系统
+    class Entity~T~ {
+        <<Generic>>
+        +CharacterController controller
+        +Vector3 lateralVelocity
+        +Vector3 verticalVelocity
+        +GroundCheck()
+        +UseCustomCollision()
+        +SplineSupport()
+    }
+    
+    class Player {
+        +PlayerStateManager stateManager
+        +PlayerInputManager inputManager
+        +PlayerStatsManager statsManager
+        +Health health
+        +ManageJumpCount()
+        +PickAndThrow()
+        +WallSlideAndHang()
+    }
+    
+    class Enemy {
+        +EnemyStateManager stateManager
+        +WaypointManager waypointManager
+        +OverlapSphereVision()
+        +ContactAttack()
+    }
+    
+    Entity~Player~ <|-- Player
+    Entity~Enemy~ <|-- Enemy
 
-### 关键类职责
+    %% 状态机系统
+    class EntityStateManager~T~ {
+        <<Generic>>
+        -Dictionary~Type, EntityState~ states
+        +EntityState current
+        +EntityState last
+        +Change~TState~()
+    }
+    
+    Player *-- EntityStateManager~Player~ : 包含
+    Enemy *-- EntityStateManager~Enemy~ : 包含
+    
+    class EntityState~T~ {
+        <<Generic>>
+        +float timeSinceEntered
+        +OnEnter()
+        +OnStep()
+        +OnExit()
+        +OnContact()
+        +CreateFromString()
+    }
+    
+    EntityStateManager~T~ o-- EntityState~T~ : 管理
 
-| 类 | 职责 |
-|----|------|
-| **Game** | 游戏单例，管理关卡列表、重试次数、存档请求、全局事件分发 |
-| **GameSaver** | 存档管理单例，支持Binary/JSON/PlayerPrefs三种序列化方式 |
-| **Entity<T>** | 实体基类，封装CharacterController、地面检测、速度管理、Spline轨道支持 |
-| **Player** | 玩家实体，实现跳跃计数、冲刺冷却、墙壁滑行、拾取投掷等玩家专属逻辑 |
-| **Enemy** | 敌人实体，实现视野检测、路径巡逻、接触攻击等AI行为 |
-| **EntityStateManager<T>** | 泛型状态机管理器，维护状态字典，处理状态切换与生命周期调用 |
-| **EntityState<T>** | 泛型状态基类，定义Enter/Exit/Step/Contact回调接口 |
-| **PlayerStats** | ScriptableObject配置，包含50+可调控手感参数 |
-| **HUD / HudPresenter** | MVP架构的UI实现，View负责显示，Presenter处理业务逻辑 |
+    %% 玩家状态实现
+    class PlayerState {
+        <<Abstract>>
+    }
+    EntityState~Player~ <|-- PlayerState
+    
+    PlayerState <|-- Walk
+    PlayerState <|-- Fall
+    PlayerState <|-- Dash
+    PlayerState <|-- Spin
+    PlayerState <|-- Swim
+    PlayerState <|-- WallDrag
+    PlayerState <|-- LedgeHang
+    note for Walk "20+ 状态类，均继承 PlayerState"
 
+    %% 辅助系统
+    class PlayerStats {
+        <<ScriptableObject>>
+        +50+ Parameters
+    }
+    class Health {
+        +Damage()
+        +Heal()
+    }
+    class GameTags {
+        <<Constants>>
+    }
+    Player ..> PlayerStats : 配置
+    Player ..> Health : 依赖
 
+    %% UI MVP系统
+    class IHudView {
+        <<Interface>>
+    }
+    class HUD {
+        <<MonoBehaviour>>
+    }
+    class HudPresenter {
+        <<Presenter>>
+    }
+    
+    IHudView <|.. HUD : 实现
+    HudPresenter --> IHudView : 驱动View
+    HudPresenter --> Game : 监听 Model (LevelScore/Game)
