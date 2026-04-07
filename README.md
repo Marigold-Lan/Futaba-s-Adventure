@@ -15,6 +15,27 @@
 
 2.UI 界面（选择存档、选择关卡）
 
+![futaba 两个UI](https://github.com/user-attachments/assets/7a28c0ff-9eb4-43ee-ab3b-a0d7643d62ec)
+
+3.跳跃（可变跳跃高度）
+   
+![futaba 跳跃2](https://github.com/user-attachments/assets/19c45e93-255c-4537-b897-dc8ee70bc751)
+
+4.滑翔（飞鸡！！）
+
+![futaba 飞机2](https://github.com/user-attachments/assets/734ef7e0-c873-4720-ba1f-5ceb084d5f5c)
+
+5.
+
+
+
+6.
+
+
+
+7.
+
+
 ---
 
 ## 🔧 技术点
