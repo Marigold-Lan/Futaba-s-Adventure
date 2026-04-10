@@ -1,0 +1,193 @@
+# Futaba's Adventure
+
+使用Unity开发的3D平台跳跃动作游戏，核心聚焦于高精度角色操控系统与模块化状态机架构，实现了类《超级马力欧》的丰富动作体系。
+
+---
+
+
+## 🎮 玩法介绍 && 部分实鸡演示 （加载GIF可能耗时）
+
+玩家操控角色在3D关卡中奔跑、跳跃、攀爬，利用多样动作技能穿越障碍、击败敌人。核心循环包含：探索关卡收集金币与星星、利用地形与技能组合抵达终点、在存档点保存进度。特色机制包括多段跳/土狼跳/蹬墙跳等精细化跳跃系统、轨道滑行与攀爬的边缘交互、冲刺/旋转攻击/踩踏等战斗动作。
+
+1.异步加载
+
+![futaba 异步加载-1](https://github.com/user-attachments/assets/c5bf41e0-84fb-44d7-bb2d-a7f4b064cca4)
+
+
+2.UI 界面（选择存档、选择关卡）
+
+![futaba UI](https://github.com/user-attachments/assets/e0963ba2-bab9-4d75-8576-ce49ff53ca8a)
+
+
+3.跳跃（可变跳跃高度）
+   
+![futaba 跳跃2](https://github.com/user-attachments/assets/19c45e93-255c-4537-b897-dc8ee70bc751)
+
+4.滑翔（飞鸡！！）
+
+![futaba 飞机2](https://github.com/user-attachments/assets/734ef7e0-c873-4720-ba1f-5ceb084d5f5c)
+
+5.交互道具盒
+
+![futaba 交互物品盒子](https://github.com/user-attachments/assets/e70bae95-dc68-4128-bb70-cd9481efa5f1)
+
+
+6.交互机关陷阱、拿起物品
+
+![futaba 交互机关陷阱与拾取物品](https://github.com/user-attachments/assets/84349cff-557f-4445-9dda-7c32b6644a62)
+
+
+7.冲刺->跳跃->重踏破坏物品->拾取金币
+
+![futaba 金币、重踏、冲刺、破坏](https://github.com/user-attachments/assets/4d7d64e5-85b9-4bb6-9052-b2f4335f0500)
+
+8.蹲下->后空翻->抓杆->调整方向->跳跃->飞扑->旋转破坏物品
+
+![futaba 蹲下、后空翻、抓杆、跳跃、飞扑、旋转破坏](https://github.com/user-attachments/assets/086819dd-bacb-4dc5-b6f5-c65c0673ce62)
+
+---
+
+## 🔧 技术点
+
+### 架构设计
+
+| 技术点 | 实现方案 | 达成效果 |
+|--------|----------|----------|
+| **泛型状态机框架** | 基于`EntityState<T>`与`EntityStateManager<T>`实现双层泛型架构，通过反射字符串数组动态实例化状态对象，状态切换通过`Change<TState>()`泛型方法实现类型安全 | Player/Enemy共享同一套状态机框架，新增状态只需继承基类无需修改管理器代码，状态切换零字符串硬编码 |
+| **数据驱动配置** | 采用ScriptableObject（`PlayerStats`/`EnemyStats`）存储角色属性，支持多段跳次数、冲刺冷却、土狼跳窗口等50+参数配置 | 策划可独立调整手感参数无需改代码，支持同一角色多套属性模板（如水中/地面不同属性） |
+| **事件驱动通信** | `PlayerEvents`/`EnemyEvents`/`EntityEvents`分层事件系统，结合UnityEvent实现零耦合订阅（如OnJump/OnHurt/OnDie） | UI层与Gameplay层完全解耦，动画/音效/粒子通过事件自动响应逻辑变化 |
+| **MVP架构的UI系统** | `HUD`作为View实现`IHudView`接口，`HudPresenter`处理业务逻辑，通过`LevelScore`/`Game`等Model层获取数据 | UI逻辑与表现分离，便于单元测试与多平台UI复用 |
+
+### 核心系统实现
+
+| 技术点 | 实现方案 | 达成效果 |
+|--------|----------|----------|
+| **精细化跳跃系统** | 实现多段跳计数器、coyoteJumpThreshold（离地后0.15s仍可跳）、min/max跳跃高度（根据按键时长决定跳跃高度）三重机制 | 跳跃手感响应精准，支持高阶技巧如边缘起跳、轻按小跳 |
+| **3C角色控制器** | 基于Unity CharacterController自定义封装`Entity<T>`基类，分离横向/纵向速度（lateralVelocity/verticalVelocity），支持自定义碰撞检测（SphereCast/CapsuleCast） | 实现蹬墙跳、边缘悬挂、斜坡滑行等复杂交互，物理响应可精确调控 |
+| **轨道滑行系统** | 利用Unity Splines包检测轨道碰撞，进入后沿Spline切线方向移动，结合坡度计算加减速 | 实现流畅的滑轨体验，下坡自动加速、上坡减速，可衔接冲刺动作 |
+| **边缘交互检测** | 通过Raycast组合检测（向前+向下+侧向）判定可悬挂边缘，结合`DetectingLedge()`算法排除球体/胶囊体误检测 | 实现准确的边缘抓取与攀爬，避免错误吸附到不合法碰撞体 |
+
+### 存档系统
+
+| 技术点 | 实现方案 | 达成效果 |
+|--------|----------|----------|
+| **多格式存档支持** | `GameSaver`单例支持Binary/JSON/PlayerPrefs三种模式切换，采用BinaryFormatter或JSON序列化 | 开发阶段使用JSON便于调试，发布切换Binary防篡改，支持多槽位存档管理 |
+| **数据持久化架构** | `GameData`/`LevelData`纯数据类配合`Game.ToData()`/`GameLevel.ToData()`方法实现全量状态导出 | 关卡进度、收集状态、重试次数完整保存，支持跨场景状态恢复 |
+
+---
+
+## 🏗️ 核心架构设计
+
+```mermaid
+classDiagram
+    %% 核心控制器层
+    class Game {
+        <<Singleton>>
+        -List~GameLevel~ levels
+        +HandleRetry()
+        +SaveGame()
+        +DontDestroyOnLoad()
+    }
+    Game --> GameSaver : 依赖
+    Game --> GameLoader : 依赖
+    Game --> GameController : 依赖
+
+    %% 实体系统
+    class Entity~T~ {
+        <<Generic>>
+        +CharacterController controller
+        +Vector3 lateralVelocity
+        +Vector3 verticalVelocity
+        +GroundCheck()
+        +UseCustomCollision()
+        +SplineSupport()
+    }
+    
+    class Player {
+        +PlayerStateManager stateManager
+        +PlayerInputManager inputManager
+        +PlayerStatsManager statsManager
+        +Health health
+        +ManageJumpCount()
+        +PickAndThrow()
+        +WallSlideAndHang()
+    }
+    
+    class Enemy {
+        +EnemyStateManager stateManager
+        +WaypointManager waypointManager
+        +OverlapSphereVision()
+        +ContactAttack()
+    }
+    
+    Entity~Player~ <|-- Player
+    Entity~Enemy~ <|-- Enemy
+
+    %% 状态机系统
+    class EntityStateManager~T~ {
+        <<Generic>>
+        -Dictionary~Type, EntityState~ states
+        +EntityState current
+        +EntityState last
+        +Change~TState~()
+    }
+    
+    Player *-- EntityStateManager~Player~ : 包含
+    Enemy *-- EntityStateManager~Enemy~ : 包含
+    
+    class EntityState~T~ {
+        <<Generic>>
+        +float timeSinceEntered
+        +OnEnter()
+        +OnStep()
+        +OnExit()
+        +OnContact()
+        +CreateFromString()
+    }
+    
+    EntityStateManager~T~ o-- EntityState~T~ : 管理
+
+    %% 玩家状态实现
+    class PlayerState {
+        <<Abstract>>
+    }
+    EntityState~Player~ <|-- PlayerState
+    
+    PlayerState <|-- Walk
+    PlayerState <|-- Fall
+    PlayerState <|-- Dash
+    PlayerState <|-- Spin
+    PlayerState <|-- Swim
+    PlayerState <|-- WallDrag
+    PlayerState <|-- LedgeHang
+    note for Walk "20+ 状态类，均继承 PlayerState"
+
+    %% 辅助系统
+    class PlayerStats {
+        <<ScriptableObject>>
+        +50+ Parameters
+    }
+    class Health {
+        +Damage()
+        +Heal()
+    }
+    class GameTags {
+        <<Constants>>
+    }
+    Player ..> PlayerStats : 配置
+    Player ..> Health : 依赖
+
+    %% UI MVP系统
+    class IHudView {
+        <<Interface>>
+    }
+    class HUD {
+        <<MonoBehaviour>>
+    }
+    class HudPresenter {
+        <<Presenter>>
+    }
+    
+    IHudView <|.. HUD : 实现
+    HudPresenter --> IHudView : 驱动View
+    HudPresenter --> Game : 监听 Model (LevelScore/Game)
