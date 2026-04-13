@@ -3,10 +3,7 @@ using UnityEngine.UI;
 
 namespace PLAYERTWO.PlatformerProject
 {
-    /// <summary>
-    /// 游戏 HUD（Heads-Up Display）视图：只负责把 Presenter 给出的数据写到 UI 组件上。
-    /// </summary>
-    [AddComponentMenu("PLAYER TWO/Platformer Project/UI/HUD")]
+    // 游戏 HUD（Heads-Up Display）视图：只负责把 Presenter 给出的数据写到 UI 组件上。
     public class HUD : MonoBehaviour, IHudView
     {
         public string retriesFormat = "00";
